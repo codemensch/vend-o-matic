@@ -75,6 +75,14 @@ const server = http.createServer((req, res) => {
   // Individual inventory item - GET /inventory/:id or PUT /inventory/:id
   else if (url.startsWith('/inventory/')) {
     const id = url.split('/')[2]; // Extract the ID from the URL
+
+    // Validate item ID (must be 1, 2, or 3)
+    const itemId = parseInt(id);
+    if (isNaN(itemId) || itemId < 1 || itemId > 3) {
+      res.statusCode = 404;
+      res.end();
+      return;
+    }
     
     if (method === 'GET') {
       const quantity = getInventory(id);
@@ -83,33 +91,33 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify(quantity));
     } else if (method === 'PUT') {
       const itemQuantity = getInventory(id);
-  
-    // Check if item is out of stock
-    if (itemQuantity === 0) {
-      res.statusCode = 404;
-      res.setHeader('X-Coins', coinsInserted.toString());
-      res.end();
-      return;
-    }
-  
-    // Check if sufficient coins (need 2 quarters)
-    if (coinsInserted < 2) {
-      res.statusCode = 403;
-      res.setHeader('X-Coins', coinsInserted.toString());
-      res.end();
-      return;
-    }
-  
-    // Valid purchase - vend item and return change
-    decrementInventory(id);
-    const remaining = getInventory(id);
-    const coinsToReturn = resetCoins();
-  
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('X-Coins', coinsToReturn.toString());
-    res.setHeader('X-Inventory-Remaining', remaining.toString());
-    res.end(JSON.stringify({ quantity: 1 }));
+
+      // Check if item is out of stock
+      if (itemQuantity === 0) {
+        res.statusCode = 404;
+        res.setHeader('X-Coins', coinsInserted.toString());
+        res.end();
+        return;
+      }
+
+      // Check if sufficient coins (need 2 quarters)
+      if (coinsInserted < 2) {
+        res.statusCode = 403;
+        res.setHeader('X-Coins', coinsInserted.toString());
+        res.end();
+        return;
+      }
+
+      // Valid purchase - vend item and return change
+      decrementInventory(id);
+      const remaining = getInventory(id);
+      const coinsToReturn = resetCoins();
+
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('X-Coins', coinsToReturn.toString());
+      res.setHeader('X-Inventory-Remaining', remaining.toString());
+      res.end(JSON.stringify({ quantity: 1 }));
     } else {
       res.statusCode = 405; // Method Not Allowed
       res.end();
