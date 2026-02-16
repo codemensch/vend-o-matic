@@ -22,6 +22,25 @@ const server = http.createServer((req, res) => {
       res.end();
     }
   }
+  // Individual inventory item - GET /inventory/:id or PUT /inventory/:id
+  else if (url.startsWith('/inventory/')) {
+    const id = url.split('/')[2]; // Extract the ID from the URL
+    
+    if (method === 'GET') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(5)); // Placeholder: always 5
+    } else if (method === 'PUT') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('X-Coins', '0');
+      res.setHeader('X-Inventory-Remaining', '5');
+      res.end(JSON.stringify({ quantity: 1 })); // Placeholder: always vend 1
+    } else {
+      res.statusCode = 405; // Method Not Allowed
+      res.end();
+    }
+  }
   // Inventory endpoints - GET /inventory
   else if (url === '/inventory' && method === 'GET') {
     res.statusCode = 200;
