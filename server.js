@@ -84,32 +84,32 @@ const server = http.createServer((req, res) => {
     } else if (method === 'PUT') {
       const itemQuantity = getInventory(id);
   
-  // Check if item is out of stock
-  if (itemQuantity === 0) {
-    res.statusCode = 404;
-    res.setHeader('X-Coins', coinsInserted.toString());
-    res.end();
-    return;
-  }
+    // Check if item is out of stock
+    if (itemQuantity === 0) {
+      res.statusCode = 404;
+      res.setHeader('X-Coins', coinsInserted.toString());
+      res.end();
+      return;
+    }
   
-  // Check if sufficient coins (need 2 quarters)
-  if (coinsInserted < 2) {
-    res.statusCode = 403;
-    res.setHeader('X-Coins', coinsInserted.toString());
-    res.end();
-    return;
-  }
+    // Check if sufficient coins (need 2 quarters)
+    if (coinsInserted < 2) {
+      res.statusCode = 403;
+      res.setHeader('X-Coins', coinsInserted.toString());
+      res.end();
+      return;
+    }
   
-  // Valid purchase - vend item and return change
-  decrementInventory(id);
-  const remaining = getInventory(id);
-  const coinsToReturn = resetCoins();
+    // Valid purchase - vend item and return change
+    decrementInventory(id);
+    const remaining = getInventory(id);
+    const coinsToReturn = resetCoins();
   
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('X-Coins', coinsToReturn.toString());
-  res.setHeader('X-Inventory-Remaining', remaining.toString());
-  res.end(JSON.stringify({ quantity: 1 }));
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('X-Coins', coinsToReturn.toString());
+    res.setHeader('X-Inventory-Remaining', remaining.toString());
+    res.end(JSON.stringify({ quantity: 1 }));
     } else {
       res.statusCode = 405; // Method Not Allowed
       res.end();
