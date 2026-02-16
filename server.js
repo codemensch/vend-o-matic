@@ -2,17 +2,14 @@ const http = require('http');
 
 const PORT = 3000;
 
+const US_QUARTER = 1; // In this vending machine, the integer 1 represents a US quarter
+const PURCHASE_PRICE = 2; // Two US quarters required for purchase
+
 // State management
 let coinsInserted = 0;
 const inventory = [5, 5, 5]; // 3 beverages, 5 of each
 
 // Helper functions
-function resetCoins() {
-  const coins = coinsInserted;
-  coinsInserted = 0;
-  return coins;
-}
-
 function addCoin() {
   coinsInserted += 1;
   return coinsInserted;
@@ -51,9 +48,15 @@ const server = http.createServer((req, res) => {
       req.on('end', () => {
         try {
           const data = JSON.parse(body);
-          if (data.coin === 1) {
-            addCoin();
+          // Machine only accepts US quarters, reject any other coin value
+          if (data.coin !== US_QUARTER) {
+            res.statusCode = 400; // Bad Request - not a valid US quarter
+            res.setHeader('X-Coins', coinsInserted.toString());
+            res.end();
+            return;
           }
+          
+          addCoin();
           res.statusCode = 204;
           res.setHeader('X-Coins', coinsInserted.toString());
           res.end();
@@ -63,7 +66,8 @@ const server = http.createServer((req, res) => {
         }
       });
     } else if (method === 'DELETE') {
-      const coinsToReturn = resetCoins(); // Get coins and reset
+      const coinsToReturn = coinsInserted; // Get current coins
+      coinsInserted = 0; // Reset to zero
       res.statusCode = 204;
       res.setHeader('X-Coins', coinsToReturn.toString());
       res.end();
@@ -101,7 +105,7 @@ const server = http.createServer((req, res) => {
       }
 
       // Check if sufficient coins (need 2 quarters)
-      if (coinsInserted < 2) {
+      if (coinsInserted < PURCHASE_PRICE) {
         res.statusCode = 403;
         res.setHeader('X-Coins', coinsInserted.toString());
         res.end();
@@ -111,11 +115,12 @@ const server = http.createServer((req, res) => {
       // Valid purchase - vend item and return change
       decrementInventory(id);
       const remaining = getInventory(id);
-      const coinsToReturn = resetCoins();
+      const change = coinsInserted - PURCHASE_PRICE;  // Calculate actual change
+      coinsInserted = 0;  // Reset coins after purchase
 
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('X-Coins', coinsToReturn.toString());
+      res.setHeader('X-Coins', change.toString());  // Return only the change
       res.setHeader('X-Inventory-Remaining', remaining.toString());
       res.end(JSON.stringify({ quantity: 1 }));
     } else {
